@@ -65,45 +65,90 @@ else return 1;
 }
 
 void gauss(vector< vector<double> > matrix){
-int sizeOfMtrx = matrix.size();
-bool solutionExists = true;
+int sizeOfMtrx = matrix.size(), k, index, numOfIndSolutions = 0;
+bool indSolutions[sizeOfMtrx+1] = {false};
 
-for(int i = 1; i < sizeOfMtrx; i++){
-        for(int j = i; j < sizeOfMtrx;j++){
-            mulRowNum(matrix[j],-matrix[i-1][i-1]/matrix[j][i-1]);
-            addRowRow(matrix[j],matrix[i-1]);
+for(index = 0; index < sizeOfMtrx && isRowEmpty(matrix[index]) == 0; index++);
+if(index == sizeOfMtrx){
+    cout << "The solution of this system is the set of real numbers.";
+    return;
+}
+for(int i = 1,l = 1; i < sizeOfMtrx && l <= sizeOfMtrx;l++,i++){
+        if(matrix[i-1][l-1] == 0){
+            for(k = i + 1; k <= sizeOfMtrx && matrix[k-1][l-1] == 0; k++);
+            if(k == sizeOfMtrx+1) {
+                numOfIndSolutions++;
+                indSolutions[l] = true;
+                i--;
+            }
+            else {
+                addRowRow(matrix[i-1],matrix[k-1]);
+                i--;
+                l--;
+            }
+        }
+        else{
+            for(int j = i; j < sizeOfMtrx;j++){
+                if(matrix[j][l-1] != 0){
+                    mulRowNum(matrix[j],-matrix[i-1][l-1]/matrix[j][l-1]);
+                    addRowRow(matrix[j],matrix[i-1]);
+                }
+            }
         }
         output(matrix);
+        cout << "\n";
 }
 
 int rang = sizeOfMtrx, i;
-for(i = sizeOfMtrx-1; i >= 0; i++){
-    if(isRowEmpty(matrix[i]) == 0) rang--;
-    else if(isRowEmpty(matrix[i]) == 1) break;
-    else {solutionExists = false; return;}
+for(i = sizeOfMtrx; i > 0; i--){
+    if(isRowEmpty(matrix[i-1]) == 0)rang--;
+    else if(isRowEmpty(matrix[i-1]) == 1) break;
+    else{
+        cout << "The system doesn't have the solution.";
+        return;
+    }
 }
-vector< vector<double> > solution(rang + 1);
+
+if(matrix[rang-1][sizeOfMtrx-2] != 0)
+    for(int i = rang+1; i <= sizeOfMtrx; i++) {
+        numOfIndSolutions++;
+        indSolutions[i] = true;
+    }
+else indSolutions[sizeOfMtrx] = false;
+
+vector< vector<double> > solution(sizeOfMtrx + 1);
 
 for(int j = 1; j <= rang; j++){
-    for(int i = rang + 1; i < sizeOfMtrx + 1; i++) solution[j].push_back(-matrix[j-1][i-1]/matrix[j-1][j-1]);
-    solution[j].push_back(matrix[j-1][sizeOfMtrx]/matrix[j-1][j-1]);
+        for(index = 1; matrix[j-1][index-1] == 0;index++);
+        for(int i = 1; i < sizeOfMtrx + 1; i++){
+            if(indSolutions[i]) solution[index].push_back(-matrix[j-1][i-1]/matrix[j-1][index-1]);
+        }
+        solution[index].push_back(matrix[j-1][sizeOfMtrx]/matrix[j-1][index-1]);
 }
-int sizeOfSolution = solution[1].size();
+int sizeOfSolution = solution[index].size();
 vector<double> mediator(sizeOfSolution);
 
 for(int i = rang-1; i > 0; i--){
-    for(int j = i+1; j <= rang; j++){
-        mediator = solution[j];
-        mulRowNum(mediator,-matrix[i-1][j-1]/matrix[i-1][i-1]);
-        addRowRow(solution[i],mediator);
+    for(index = 1; matrix[i-1][index-1] == 0;index++);
+    for(int j = index+1; j <= sizeOfMtrx; j++)
+        if(!indSolutions[j]){
+            mediator = solution[j];
+            mulRowNum(mediator,-matrix[i-1][j-1]/matrix[i-1][i-1]);
+            addRowRow(solution[i],mediator);
+        }
+}
+
+for(int i = 1; i <= sizeOfMtrx; i++)
+    if(!indSolutions[i]){
+        cout << "\nx" << i << " = ";
+        for(int k = i + 1, j = 0; k <= sizeOfMtrx; k++){
+            if(indSolutions[k]){
+                cout << solution[i][j] << "*" << "x" << k << " ";
+                j++;
+            }
+        }
+        cout << solution[i][sizeOfSolution - 1];
     }
-}
-for(int i = 1; i <= rang; i++){
-    cout << "\nx" << i << " = ";
-    for(int j = 0; j < sizeOfSolution - 1; j++)
-        cout << solution[i][j] << "*" << "x" << j + rang + 1<< " ";
-    cout << solution[i][sizeOfMtrx - rang];
-}
 }
 
 main(){
@@ -129,10 +174,6 @@ while(m){
         break;
         case 4:
             gauss(matrix);
-            /*vector<double> solution = gauss(matrix);
-            for(int i = 0; i < solution.size(); i++){
-                cout << "x" << i + 1 << " = " << solution[i] << "\n";
-            }*/
         break;
     }
 }
